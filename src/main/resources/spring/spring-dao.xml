@@ -43,9 +43,10 @@
     </bean>
 
     <!--4:配置扫描 dao 接口包，动态实现 dao 接口，注入到 spring 容器中-->
+    <!--会在引用配置文件的时候，自动调用这个配置，所以不需要定义 id 属性-->
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
         <!--注入 sqlSessionFactory-->
-        <property name="sqlSessionTemplateBeanName" value="sqlSessionFactory"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
         <!--给出需要扫描 dao 接口包-->
         <property name="basePackage" value="org.seckill.dao"/>
     </bean>

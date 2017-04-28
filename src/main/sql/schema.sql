@@ -42,4 +42,4 @@ KEY idx_create_time(create_time)
 
 
 -- 连接数据库控制台
-mysql -uroot -p
+# mysql -uroot -p
