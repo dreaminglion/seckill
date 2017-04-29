@@ -14,7 +14,7 @@
 
     <!--配置事务管理器-->
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-        <!--注入数据库连接池-->
+        <!--注入数据库连接池，ref="dataSource" 在 spring-dao.xml 中，一起引用即可-->
         <property name="dataSource" ref="dataSource"/>
     </bean>
 
