@@ -1,6 +1,5 @@
 package org.seckill.web;
 
-import org.omg.CORBA.PUBLIC_MEMBER;
 import org.seckill.dto.Exposer;
 import org.seckill.dto.SeckillExecution;
 import org.seckill.dto.SeckillResult;
