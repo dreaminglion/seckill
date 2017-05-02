@@ -2,6 +2,7 @@ package org.seckill.service.impl;
 
 import org.seckill.dao.SeckillDao;
 import org.seckill.dao.SuccessKilledDao;
+import org.seckill.dao.cache.RedisDao;
 import org.seckill.dto.Exposer;
 import org.seckill.dto.SeckillExecution;
 import org.seckill.entity.Seckill;
@@ -23,6 +24,7 @@ import java.util.List;
 
 /**
  * Created by lishi on 2017/4/28.
+ *
  * @Component @Service @Dao @Controller
  */
 @Service
@@ -36,6 +38,9 @@ public class SeckillServiceImpl implements SeckillService {
     @Autowired
     private SuccessKilledDao successKilledDao;
 
+    @Autowired
+    private RedisDao redisDao;
+
     //md5 盐值字符串，用于混淆 MD5
     private final String slat = "shahofosfowhf37y92y9&9888*(%4%shof";
 
@@ -48,9 +53,18 @@ public class SeckillServiceImpl implements SeckillService {
     }
 
     public Exposer exportSeckillUrl(long seckillId) {
-        Seckill seckill = seckillDao.queryById(seckillId);
+        // 优化点：缓存优化，超时的基础上维护一致性
+        // 1：访问 redis
+        Seckill seckill = redisDao.getSeckill(seckillId);
         if (seckill == null) {
-            return new Exposer(false, seckillId);
+            //2:访问数据库
+            seckill = seckillDao.queryById(seckillId);
+            if (seckill == null) {
+                return new Exposer(false, seckillId);
+            } else {
+                //3：放入 redis
+                redisDao.putSeckill(seckill);
+            }
         }
 
         Date startTime = seckill.getStartTime();
@@ -74,18 +88,16 @@ public class SeckillServiceImpl implements SeckillService {
     }
 
     /**
-     *
      * @param seckillId
      * @param userPhone
      * @param md5
      * @return
      * @throws SeckillExecption
      * @throws RepeatKillException
-     * @throws SeckillCloseExecption
-     * 使用注解控制事务方法的有点
-     * 1：开发团队达成一致约定，明确标注事务方法的编程风格。
-     * 2：保证事务方法的执行时间尽可能短，不要穿插其它网络操作，rpc、http 请求 或者剥离到事务方法外部。
-     * 3：不是所有的方法都需要事务，如：只有一条修改，或者读取操作。
+     * @throws SeckillCloseExecption 使用注解控制事务方法的有点
+     *                               1：开发团队达成一致约定，明确标注事务方法的编程风格。
+     *                               2：保证事务方法的执行时间尽可能短，不要穿插其它网络操作，rpc、http 请求 或者剥离到事务方法外部。
+     *                               3：不是所有的方法都需要事务，如：只有一条修改，或者读取操作。
      */
     @Transactional
     public SeckillExecution executeSeckill(long seckillId, long userPhone, String md5) throws SeckillExecption, RepeatKillException, SeckillCloseExecption {
